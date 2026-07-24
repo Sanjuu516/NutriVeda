@@ -8,7 +8,6 @@ import ProblemScale from './components/ProblemScale';
 import FusionEngine from './components/FusionEngine';
 import ArchitectureMap from './components/ArchitectureMap';
 import CrackedGlassChallenges from './components/CrackedGlassChallenges';
-import ImpactStats from './components/ImpactStats';
 import TempleFooter from './components/TempleFooter';
 import NutriVedaEngine from './components/NutriVedaEngine';
 import { SPORTS_DATABASE } from './data/sportsData';
@@ -38,7 +37,7 @@ export default function App() {
       {/* Main Content Sections */}
       <main className="relative z-10">
         
-        {/* DNA Helix 3D Hero */}
+        {/* DNA Helix 3D Realistic Hero */}
         <DNAHelixHero
           onExploreClick={() => {
             const el = document.getElementById('sports');
@@ -65,9 +64,6 @@ export default function App() {
 
         {/* Feature 5: Kintsugi Cracked Glass Challenges */}
         <CrackedGlassChallenges />
-
-        {/* Feature 6: Impact & Metrics Room */}
-        <ImpactStats />
 
       </main>
 
