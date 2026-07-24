@@ -3,14 +3,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { soundEngine } from '../utils/audio';
 import { 
   Sparkles, Bot, Layers, Calendar, ShoppingBag, HeartPulse, 
-  RotateCcw, ArrowRight, ShieldCheck, Flame, Droplets, Moon, 
-  Check, Maximize2, Move3D
+  RotateCcw, ShieldCheck, Flame, Droplets, Moon, 
+  Check, Dna, Info, Target
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { AYURVEDIC_DOSHAS } from '../data/sportsData';
 
 export default function SpatialDashboard({ athleteData, selectedSport, onReset }) {
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'nutrition' | 'exercise' | 'recovery' | 'shopping'
   const [spatialRotation, setSpatialRotation] = useState({ rx: 0, ry: 0 });
+
+  const doshaInfo = AYURVEDIC_DOSHAS[athleteData.dosha] || AYURVEDIC_DOSHAS.pitta;
 
   // Trigger celebration on dashboard load
   React.useEffect(() => {
@@ -22,12 +25,18 @@ export default function SpatialDashboard({ athleteData, selectedSport, onReset }
     });
   }, []);
 
-  // Compute metrics
+  // Compute Base Metrics strictly grounded in Sports Science
   const bmr = Math.round(10 * athleteData.weight + 6.25 * athleteData.height - 5 * athleteData.age + (athleteData.gender === 'male' ? 5 : -161));
-  const tdee = Math.round(bmr * (selectedSport.macroSplit.targetCalMultiplier + (athleteData.trainingLoad / 100) * 0.3));
+  let baseTdee = Math.round(bmr * (selectedSport.macroSplit.targetCalMultiplier + (athleteData.trainingLoad / 100) * 0.3));
+
+  // Goal Adjustments
+  if (athleteData.goal === 'weight_loss') baseTdee = Math.round(baseTdee * 0.85);
+  else if (athleteData.goal === 'muscle_gain') baseTdee = Math.round(baseTdee * 1.15);
+  else if (athleteData.goal === 'endurance') baseTdee = Math.round(baseTdee * 1.2);
+
   const proteinGrams = Math.round(athleteData.weight * (1.8 + (athleteData.trainingLoad / 100) * 0.4));
-  const carbsGrams = Math.round((tdee * (selectedSport.macroSplit.carbs / 100)) / 4);
-  const fatGrams = Math.round((tdee * (selectedSport.macroSplit.fat / 100)) / 9);
+  const carbsGrams = Math.round((baseTdee * (selectedSport.macroSplit.carbs / 100)) / 4);
+  const fatGrams = Math.round((baseTdee * (selectedSport.macroSplit.fat / 100)) / 9);
   const hydrationLiters = (athleteData.weight * 0.04 + (athleteData.trainingLoad / 100) * 1.2).toFixed(1);
 
   // Mouse spatial tilt handler
@@ -36,8 +45,8 @@ export default function SpatialDashboard({ athleteData, selectedSport, onReset }
     const x = e.clientX - rect.left - rect.width / 2;
     const y = e.clientY - rect.top - rect.height / 2;
     setSpatialRotation({
-      rx: (-y / rect.height) * 12,
-      ry: (x / rect.width) * 12
+      rx: (-y / rect.height) * 10,
+      ry: (x / rect.width) * 10
     });
   };
 
@@ -52,13 +61,13 @@ export default function SpatialDashboard({ athleteData, selectedSport, onReset }
           </div>
           <div>
             <h2 className="font-serif font-bold text-sm text-vedic-charcoal flex items-center gap-2">
-              <span>{athleteData.name}'s Vision Pro Dashboard</span>
+              <span>{athleteData.name}'s Dashboard</span>
               <span className="text-[10px] font-mono font-bold bg-vedic-emerald/20 text-vedic-forest px-2 py-0.5 rounded-full uppercase">
                 {selectedSport.name} Elite
               </span>
             </h2>
             <p className="text-[11px] font-mono text-vedic-slate">
-              Prakriti: <span className="font-bold text-vedic-copper capitalize">{athleteData.dosha}</span> • TDEE: {tdee} kcal
+              Primary Target: <span className="font-bold text-vedic-forest uppercase">{athleteData.goal.replace('_', ' ')}</span> • {baseTdee} kcal • {proteinGrams}g Protein
             </p>
           </div>
         </div>
@@ -121,6 +130,29 @@ export default function SpatialDashboard({ athleteData, selectedSport, onReset }
           {activeTab === 'overview' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               
+              {/* Architecture Balance Banner */}
+              <div className="lg:col-span-12 glass-card p-4 px-6 rounded-2xl border border-vedic-gold/40 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gradient-to-r from-vedic-bg2 to-white">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-vedic-gold/20 text-vedic-copper">
+                    <Dna className="w-5 h-5" />
+                  </div>
+                  <div className="text-xs">
+                    <span className="font-mono font-bold text-vedic-forest uppercase">
+                      DUAL-LAYER SYNTHESIS ARCHITECTURE
+                    </span>
+                    <p className="text-vedic-slate font-light">
+                      Base caloric intake ({baseTdee} kcal, {proteinGrams}g Protein) is calculated from your sport biometrics. {doshaInfo.name} provides the fine-tuning layer.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-xs font-mono font-bold px-3 py-1 rounded-full bg-vedic-forest text-vedic-gold">
+                    {doshaInfo.icon} {athleteData.dosha.toUpperCase()} Fine-Tuned
+                  </span>
+                </div>
+              </div>
+
               {/* AI Coach Assistant Banner (Feature 8) */}
               <div className="lg:col-span-12 glass-card p-6 rounded-3xl border border-vedic-gold/40 shadow-xl bg-gradient-to-r from-vedic-bg2 to-white relative overflow-hidden">
                 <div className="flex items-start gap-4">
@@ -135,13 +167,13 @@ export default function SpatialDashboard({ athleteData, selectedSport, onReset }
                       <span className="text-[11px] font-mono text-vedic-slate">Just Now</span>
                     </div>
                     <p className="font-serif text-lg font-semibold text-vedic-charcoal leading-snug">
-                      "Good morning {athleteData.name}. Today's {selectedSport.name} training demands explosive energy and rapid metabolic recovery. We've increased your complex carbs by 15% pre-session and scheduled Ashwagandha golden milk before sleep."
+                      "Good morning {athleteData.name}. To support your {selectedSport.name} goals ({athleteData.goal.replace('_', ' ')}), your target energy intake is set to {baseTdee} kcal. Since your Prakriti is {doshaInfo.name}, we've adjusted your meal prep style to {doshaInfo.mealPrepStyle} with {doshaInfo.primaryHerb}."
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Performance Athlete Score Gauge (Feature 12) */}
+              {/* Performance Athlete Score Gauge */}
               <div className="lg:col-span-4 glass-card p-6 rounded-3xl border border-vedic-gold/40 shadow-xl text-center space-y-4 flex flex-col justify-between">
                 <div className="font-mono text-xs font-bold text-vedic-forest uppercase tracking-wider">
                   ATHLETE PERFORMANCE SCORE
@@ -166,7 +198,7 @@ export default function SpatialDashboard({ athleteData, selectedSport, onReset }
                 </p>
               </div>
 
-              {/* Dynamic Macro Rings (Feature 7) */}
+              {/* Dynamic Macro Rings */}
               <div className="lg:col-span-4 glass-card p-6 rounded-3xl border border-vedic-gold/40 shadow-xl space-y-4 flex flex-col justify-between">
                 <div className="flex justify-between items-center border-b border-vedic-sand pb-2">
                   <span className="font-mono text-xs font-bold text-vedic-forest uppercase">MACRO RINGS</span>
@@ -176,8 +208,8 @@ export default function SpatialDashboard({ athleteData, selectedSport, onReset }
                 <div className="space-y-3">
                   <div className="space-y-1">
                     <div className="flex justify-between text-xs font-bold">
-                      <span className="text-vedic-copper">Calories</span>
-                      <span className="font-mono">{tdee} kcal</span>
+                      <span className="text-vedic-copper">Calories Target</span>
+                      <span className="font-mono">{baseTdee} kcal</span>
                     </div>
                     <div className="h-2.5 rounded-full bg-vedic-sand overflow-hidden">
                       <div className="h-full bg-vedic-copper w-[92%] rounded-full" />
@@ -215,7 +247,7 @@ export default function SpatialDashboard({ athleteData, selectedSport, onReset }
                 </div>
               </div>
 
-              {/* Recovery Intelligence (Feature 14) */}
+              {/* Recovery Intelligence */}
               <div className="lg:col-span-4 glass-card p-6 rounded-3xl border border-vedic-gold/40 shadow-xl space-y-4 flex flex-col justify-between">
                 <div className="flex items-center justify-between border-b border-vedic-sand pb-2">
                   <span className="font-mono text-xs font-bold text-vedic-forest uppercase">RECOVERY PREDICTION</span>
@@ -245,7 +277,7 @@ export default function SpatialDashboard({ athleteData, selectedSport, onReset }
             </div>
           )}
 
-          {/* TAB 2: INTERACTIVE NUTRITION PLATE (Feature 6) */}
+          {/* TAB 2: INTERACTIVE NUTRITION PLATE */}
           {activeTab === 'nutrition' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               
@@ -256,80 +288,76 @@ export default function SpatialDashboard({ athleteData, selectedSport, onReset }
                     Interactive Ayurvedic Performance Plate
                   </h3>
                   <p className="text-xs text-vedic-slate font-light">
-                    Visual meal assembly calculated for {selectedSport.name} ({carbsGrams}g Carbs • {proteinGrams}g Protein)
+                    Visual meal assembly for {selectedSport.name} ({carbsGrams}g Carbs • {proteinGrams}g Protein • {doshaInfo.name} Temperature)
                   </p>
                 </div>
 
                 {/* Animated Plate Graphic */}
                 <div className="relative w-72 h-72 mx-auto rounded-full bg-gradient-to-tr from-vedic-sand to-white border-8 border-vedic-gold/40 shadow-2xl p-4 flex items-center justify-center overflow-hidden">
-                  {/* Plate Dividers */}
-                  <div className="absolute inset-0 border-r border-b border-vedic-sand opacity-60" />
-
-                  {/* Food Items Animation */}
                   <div className="grid grid-cols-2 gap-4 w-full h-full z-10">
                     <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="flex flex-col items-center justify-center p-2 rounded-2xl bg-amber-100/80 border border-amber-300">
                       <span className="text-3xl">🍚</span>
-                      <span className="text-[10px] font-bold text-amber-900 font-mono mt-1">Brown Rice ({carbsGrams}g)</span>
+                      <span className="text-[10px] font-bold text-amber-900 font-mono mt-1">Carbs ({carbsGrams}g)</span>
                     </motion.div>
 
                     <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.1 }} className="flex flex-col items-center justify-center p-2 rounded-2xl bg-emerald-100/80 border border-emerald-300">
                       <span className="text-3xl">🫘</span>
-                      <span className="text-[10px] font-bold text-emerald-900 font-mono mt-1">Paneer / Sprouts ({proteinGrams}g)</span>
+                      <span className="text-[10px] font-bold text-emerald-900 font-mono mt-1">Protein ({proteinGrams}g)</span>
                     </motion.div>
 
                     <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2 }} className="flex flex-col items-center justify-center p-2 rounded-2xl bg-green-100/80 border border-green-300">
                       <span className="text-3xl">🥦</span>
-                      <span className="text-[10px] font-bold text-green-900 font-mono mt-1">Steamed Sabzi</span>
+                      <span className="text-[10px] font-bold text-green-900 font-mono mt-1">{doshaInfo.recommendedDiet[2] || 'Greens'}</span>
                     </motion.div>
 
                     <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3 }} className="flex flex-col items-center justify-center p-2 rounded-2xl bg-yellow-100/80 border border-yellow-300">
                       <span className="text-3xl">🍯</span>
-                      <span className="text-[10px] font-bold text-yellow-900 font-mono mt-1">Cow Ghee ({fatGrams}g)</span>
+                      <span className="text-[10px] font-bold text-yellow-900 font-mono mt-1">Healthy Fats ({fatGrams}g)</span>
                     </motion.div>
                   </div>
                 </div>
 
                 <div className="flex justify-center gap-4 text-xs font-mono">
-                  <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 font-bold">50% Complex Carbs</span>
-                  <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 font-bold">30% Lean Protein</span>
-                  <span className="px-3 py-1 rounded-full bg-yellow-100 text-yellow-900 font-bold">20% Healthy Fats</span>
+                  <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 font-bold">{selectedSport.macroSplit.carbs}% Carbs</span>
+                  <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 font-bold">{selectedSport.macroSplit.protein}% Protein</span>
+                  <span className="px-3 py-1 rounded-full bg-yellow-100 text-yellow-900 font-bold">{selectedSport.macroSplit.fat}% Fats</span>
                 </div>
               </div>
 
               {/* Ahara & Dravya Recommendation List */}
               <div className="lg:col-span-5 glass-card p-6 rounded-3xl border border-vedic-gold/40 shadow-xl space-y-4">
                 <h4 className="font-serif text-lg font-bold text-vedic-charcoal border-b border-vedic-sand pb-2">
-                  Prescribed Ayurvedic Dravyas
+                  Prescribed Dravyas ({doshaInfo.name})
                 </h4>
 
                 <div className="space-y-3">
                   <div className="p-3.5 rounded-2xl bg-white border border-vedic-sand space-y-1">
                     <div className="flex justify-between items-center text-xs font-bold text-vedic-forest">
-                      <span>🌿 {selectedSport.doshaAlignments[athleteData.dosha]?.primaryHerb || 'Ashwagandha'}</span>
-                      <span className="text-[10px] font-mono bg-vedic-gold/20 px-2 py-0.5 rounded-full text-vedic-copper">Pre-Workout</span>
+                      <span>🌿 {doshaInfo.primaryHerb}</span>
+                      <span className="text-[10px] font-mono bg-vedic-gold/20 px-2 py-0.5 rounded-full text-vedic-copper">Primary Dravya</span>
                     </div>
                     <p className="text-xs text-vedic-slate font-light">
-                      {selectedSport.doshaAlignments[athleteData.dosha]?.benefit || 'Enhances ATP endurance & joint stability.'}
+                      {doshaInfo.herbBenefit}
                     </p>
                   </div>
 
                   <div className="p-3.5 rounded-2xl bg-white border border-vedic-sand space-y-1">
                     <div className="flex justify-between items-center text-xs font-bold text-vedic-forest">
-                      <span>🥥 Kokum & Electrolyte Jal</span>
-                      <span className="text-[10px] font-mono bg-vedic-emerald/20 px-2 py-0.5 rounded-full text-vedic-forest">Intra-Training</span>
+                      <span>🥗 Recommended Ahara</span>
+                      <span className="text-[10px] font-mono bg-vedic-emerald/20 px-2 py-0.5 rounded-full text-vedic-forest">Meal Strategy</span>
                     </div>
                     <p className="text-xs text-vedic-slate font-light">
-                      Prevents Pitta overheating & preserves sodium balance during heavy sweat loss.
+                      {doshaInfo.recommendedDiet[0]}
                     </p>
                   </div>
 
                   <div className="p-3.5 rounded-2xl bg-white border border-vedic-sand space-y-1">
-                    <div className="flex justify-between items-center text-xs font-bold text-vedic-forest">
-                      <span>🥛 Golden Turmeric Almond Milk</span>
-                      <span className="text-[10px] font-mono bg-vedic-copper/20 px-2 py-0.5 rounded-full text-vedic-copper">Night Recovery</span>
+                    <div className="flex justify-between items-center text-xs font-bold text-red-700">
+                      <span>🚫 Foods to Avoid</span>
+                      <span className="text-[10px] font-mono bg-red-100 px-2 py-0.5 rounded-full text-red-800">Prakriti Caution</span>
                     </div>
                     <p className="text-xs text-vedic-slate font-light">
-                      Flushes lactic acid and promotes deep REM restorative sleep.
+                      {doshaInfo.avoidList[0]} & {doshaInfo.avoidList[1]}
                     </p>
                   </div>
                 </div>
@@ -338,7 +366,7 @@ export default function SpatialDashboard({ athleteData, selectedSport, onReset }
             </div>
           )}
 
-          {/* TAB 3: DAILY TIMELINE & WEEKLY CALENDAR (Features 4 & 5) */}
+          {/* TAB 3: DAILY TIMELINE & WEEKLY CALENDAR */}
           {activeTab === 'exercise' && (
             <div className="space-y-6">
               {/* Daily Horizontal Timeline (Dinacharya) */}
@@ -354,12 +382,12 @@ export default function SpatialDashboard({ athleteData, selectedSport, onReset }
                 <div className="flex items-center gap-4 overflow-x-auto pb-4 pt-2">
                   {[
                     { time: '05:30 AM', title: 'Brahma Muhurta Wake Up', icon: '🌅' },
-                    { time: '06:00 AM', title: 'Copper Jal Hydration', icon: '💧' },
-                    { time: '06:30 AM', title: 'Pranayama & Dynamic Warmup', icon: '🧘' },
+                    { time: '06:00 AM', title: 'Hydration Jal', icon: '💧' },
+                    { time: '06:30 AM', title: 'Pranayama & Warmup', icon: '🧘' },
                     { time: '07:00 AM', title: `${selectedSport.name} Training Session`, icon: selectedSport.icon },
                     { time: '08:45 AM', title: 'Post-Workout Rasayana Meal', icon: '🍲' },
                     { time: '01:00 PM', title: 'Ayurvedic Balanced Lunch', icon: '🥗' },
-                    { time: '05:00 PM', title: 'Tactical Drills & Mobility', icon: '⚡' },
+                    { time: '05:00 PM', title: `${doshaInfo.exerciseStyle.split(',')[0]} Drills`, icon: '⚡' },
                     { time: '08:00 PM', title: 'Light Nutritious Dinner', icon: '🥣' },
                     { time: '10:00 PM', title: 'Herbal Golden Milk & Sleep', icon: '🌙' }
                   ].map((step, idx) => (
@@ -375,7 +403,7 @@ export default function SpatialDashboard({ athleteData, selectedSport, onReset }
               {/* Weekly Performance Calendar */}
               <div className="glass-card p-6 rounded-3xl border border-vedic-gold/40 shadow-xl space-y-4">
                 <h3 className="font-serif text-xl font-bold text-vedic-charcoal border-b border-vedic-sand pb-2">
-                  Apple-Style Weekly Microcycle Plan
+                  Weekly Microcycle Plan
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-7 gap-3">
@@ -393,7 +421,7 @@ export default function SpatialDashboard({ athleteData, selectedSport, onReset }
             </div>
           )}
 
-          {/* TAB 4: SMART GROCERY LIST (Feature 13) */}
+          {/* TAB 4: SMART GROCERY LIST */}
           {activeTab === 'shopping' && (
             <div className="glass-card p-8 rounded-3xl border border-vedic-gold/40 shadow-xl space-y-6">
               <div className="flex justify-between items-center border-b border-vedic-sand pb-3">
@@ -402,7 +430,7 @@ export default function SpatialDashboard({ athleteData, selectedSport, onReset }
                     Smart Ayurvedic Grocery Basket
                   </h3>
                   <p className="text-xs text-vedic-slate font-light">
-                    Auto-categorized weekly shopping list based on {athleteData.dosha.toUpperCase()} Prakriti.
+                    Auto-categorized weekly shopping list aligned with {doshaInfo.name}.
                   </p>
                 </div>
                 <button
@@ -420,10 +448,9 @@ export default function SpatialDashboard({ athleteData, selectedSport, onReset }
                     🥬 Vegetables & Greens
                   </span>
                   <ul className="text-xs text-vedic-slate space-y-1.5 font-light">
-                    <li>• Spinach & Methi Greens</li>
-                    <li>• Sweet Potatoes</li>
-                    <li>• Ash Gourd (Petha)</li>
-                    <li>• Beetroots</li>
+                    {doshaInfo.recommendedDiet.map((item, i) => (
+                      <li key={i}>• {item}</li>
+                    ))}
                   </ul>
                 </div>
 
@@ -457,7 +484,7 @@ export default function SpatialDashboard({ athleteData, selectedSport, onReset }
                   </span>
                   <ul className="text-xs text-vedic-slate space-y-1.5 font-light">
                     <li>• A2 Desi Cow Ghee</li>
-                    <li>• Ashwagandha Churna</li>
+                    <li>• {doshaInfo.primaryHerb}</li>
                     <li>• Organic Amla Juice</li>
                     <li>• Kokum & Cardamom</li>
                   </ul>
@@ -466,13 +493,13 @@ export default function SpatialDashboard({ athleteData, selectedSport, onReset }
             </div>
           )}
 
-          {/* TAB 5: AYURVEDA & RECOVERY (Feature 16) */}
+          {/* TAB 5: AYURVEDA & RECOVERY */}
           {activeTab === 'recovery' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               
               <div className="lg:col-span-12 glass-card p-6 rounded-3xl border border-vedic-gold/40 shadow-xl space-y-4">
                 <h3 className="font-serif text-xl font-bold text-vedic-charcoal border-b border-vedic-sand pb-2">
-                  AI Actionable Recommendations
+                  AI Actionable Recommendations ({doshaInfo.name})
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -482,7 +509,7 @@ export default function SpatialDashboard({ athleteData, selectedSport, onReset }
                       <Check className="w-4 h-4 text-vedic-emerald" />
                     </div>
                     <p className="text-xs text-vedic-slate font-light">
-                      Consume 500ml warm water with lemon & sea salt upon waking to flush metabolic waste.
+                      Target {hydrationLiters} L water per day. Prefer warm or room temperature fluids with cardamom.
                     </p>
                   </div>
 
